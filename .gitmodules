@@ -1,0 +1,3 @@
+[submodule "SdlStreaming/sdl_android"]
+	path = SdlStreaming/sdl_android
+	url = https://github.com/XevoInc/sdl_android.git

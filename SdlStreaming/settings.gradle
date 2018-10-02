@@ -1,1 +1,3 @@
 include ':app'
+include ':sdl_android'
+project (':sdl_android').projectDir = new File('sdl_android/sdl_android')
