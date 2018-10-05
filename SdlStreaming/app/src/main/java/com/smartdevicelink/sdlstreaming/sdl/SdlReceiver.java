@@ -2,6 +2,7 @@ package com.smartdevicelink.sdlstreaming.sdl;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import com.smartdevicelink.transport.SdlBroadcastReceiver;
 import com.smartdevicelink.transport.SdlRouterService;
@@ -19,6 +20,10 @@ public class SdlReceiver extends SdlBroadcastReceiver {
     @Override
     public void onSdlEnabled(Context context, Intent intent) {
         intent.setClass(context,SdlService.class);
-        context.startService(intent);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            context.startService(intent);
+        }else{
+            context.startForegroundService(intent);
+        }
     }
 }
