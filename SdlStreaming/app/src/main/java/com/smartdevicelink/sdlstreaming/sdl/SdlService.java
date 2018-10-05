@@ -199,8 +199,10 @@ public class SdlService extends Service implements IProxyListenerALM{
                     cachedIntent = intent;
                 }else{
                     //If we don't want anything but USB then would just do a return here and bail
-                   // transport = new MultiplexTransportConfig(getBaseContext(), APP_ID);
-                    transport = new TCPTransportConfig(12345,"192.168.1.213",true);
+                    MultiplexTransportConfig config  = new MultiplexTransportConfig(getBaseContext(), APP_ID);
+                    config.setRequiresHighBandwidth(true);
+                    transport = config;
+                    //transport = new TCPTransportConfig(12345,"192.168.1.213",true);
                     Log.e(TAG, "Not usb intent. Going to use bluetooth. Glob help us");
                 }
                 Log.d(TAG, "Transport type: " + transport.getTransportType());
