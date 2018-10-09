@@ -1,11 +1,16 @@
 package com.smartdevicelink.sdlstreaming.sdl;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -151,6 +156,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     List<Class<? extends SdlSecurityBase>> securityLibraries = new ArrayList<>();
 
+    private static final int FOREGROUND_SERVICE_ID = 23456;
+    private static final String NOTIFICATION_CHANNEL_ID = "sdl_streaming_app_channel";
+    private static final String NOTIFICATION_CHANNEL_NAME = "SdlStreamingAppChannel";
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -162,6 +171,8 @@ public class SdlService extends Service implements IProxyListenerALM{
         Log.d(TAG, "onCreate");
         super.onCreate();
         remoteFiles = new ArrayList<String>();
+
+        enterForeground();
     }
 
     @Override
@@ -178,7 +189,40 @@ public class SdlService extends Service implements IProxyListenerALM{
         stopVideoStream();
         disposeSyncProxy();
 
+        exitForeground();
+
         super.onDestroy();
+    }
+
+    private void enterForeground() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+                NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+                notificationManager.createNotificationChannel(channel);
+            }
+
+            Notification.Builder builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID);
+            builder.setContentTitle("SdlStreaming app");
+            builder.setContentText("SdlService running in foreground");
+            builder.setSmallIcon(android.R.drawable.stat_sys_data_bluetooth);
+            builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), android.R.drawable.stat_sys_data_bluetooth));
+
+            Log.d(TAG, "starting SdlService foreground service");
+            startForeground(FOREGROUND_SERVICE_ID, builder.build());
+        }
+    }
+
+    private void exitForeground() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+                notificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+            }
+
+            Log.d(TAG, "stopping SdlService foreground service");
+            stopForeground(true);
+        }
     }
 
     public static SdlProxyALM getProxy() {
