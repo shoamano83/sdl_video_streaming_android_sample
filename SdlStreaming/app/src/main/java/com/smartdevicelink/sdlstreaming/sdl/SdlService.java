@@ -9,6 +9,9 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -118,13 +121,21 @@ import com.smartdevicelink.transport.TransportConstants;
 import com.smartdevicelink.transport.USBTransportConfig;
 import com.smartdevicelink.util.CorrelationIdGenerator;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
+
+import static com.smartdevicelink.util.NativeLogTool.logInfo;
 
 public class SdlService extends Service implements IProxyListenerALM{
 
@@ -173,6 +184,38 @@ public class SdlService extends Service implements IProxyListenerALM{
         remoteFiles = new ArrayList<String>();
 
         enterForeground();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                Log.w("DEBUG", "timer running");
+
+                ConnectivityManager connMan = (ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+                // requires ACCESS_NETWORK_STATE permission
+                Network[] allNetworks = connMan.getAllNetworks();
+
+                for (Network network : allNetworks) {
+                    // requires ACCESS_NETWORK_STATE permission
+                    NetworkCapabilities capabilities = connMan.getNetworkCapabilities(network);
+                    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                        try {
+                            Log.w("DEBUG", "trying mobile connection");
+                            URL url = new URL("https://ntp-a1.nict.go.jp/cgi-bin/time");
+                            URLConnection conn = network.openConnection(url);
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            while (reader.ready()) {
+                                String s = reader.readLine();
+                                Log.w("DEBUG", "response from server: " + s);
+                            }
+                        } catch (IOException e) {
+                            Log.w("DEBUG", "IOException: " + e);
+                        }
+                    }
+                }
+            }
+        };
+        Timer t = new Timer();
+        t.scheduleAtFixedRate(task, 5000, 5000);
     }
 
     @Override
