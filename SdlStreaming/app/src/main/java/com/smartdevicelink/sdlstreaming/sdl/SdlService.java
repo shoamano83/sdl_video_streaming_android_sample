@@ -327,6 +327,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     }
 
     private void startClassicVideoStream(){
+        Log.i(TAG, "<TRACE> Starting classic video streaming");
         Log.i(TAG, "Starting test.");
         if(proxy == null){
             Log.w(TAG, "Proxy was null still");
@@ -351,6 +352,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     private void startEnhancedVideoStream(){
         if(proxy != null){
+            Log.i(TAG, "<TRACE> Starting Remote Display streaming");
             proxy.startRemoteDisplayStream(getApplicationContext(),MyPresentation.class, null, (securityLibraries.size()>0));
         }
     }
@@ -512,6 +514,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     public void onOnHMIStatus(OnHMIStatus notification) {
         if(notification.getHmiLevel().equals(HMILevel.HMI_FULL)){
             if (notification.getFirstRun()) {
+                Log.i(TAG, "<TRACE> OnHMIStatus FULL, starting video streaming");
                 notifyStreaming();
                 startVideoStream();
             }
